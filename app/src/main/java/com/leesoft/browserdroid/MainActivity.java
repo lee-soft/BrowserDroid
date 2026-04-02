@@ -27,6 +27,22 @@ public class MainActivity extends AppCompatActivity {
     private TextView statusText;
     private Button startButton;
     private Button stopButton;
+    private Button accessibilityButton;
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        updateAccessibilityButton();
+        showUrl();
+    }
+
+    private void updateAccessibilityButton() {
+        boolean enabled = BrowserDroidAccessibilityService.isEnabled();
+        accessibilityButton.setText(enabled ? "✓ Touch Control Enabled" : "Enable Touch Control");
+        accessibilityButton.setBackgroundTintList(
+                android.content.res.ColorStateList.valueOf(enabled ? 0xFF2E7D32 : 0xFF1565C0));
+        accessibilityButton.setEnabled(!enabled);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -37,11 +53,12 @@ public class MainActivity extends AppCompatActivity {
         statusText = findViewById(R.id.statusText);
         startButton = findViewById(R.id.startButton);
         stopButton = findViewById(R.id.stopButton);
+        accessibilityButton = findViewById(R.id.accessibilityButton);
 
         startButton.setOnClickListener(v -> checkPermissionsAndStart());
         stopButton.setOnClickListener(v -> stopStreaming());
 
-        findViewById(R.id.accessibilityButton).setOnClickListener(v -> {
+        accessibilityButton.setOnClickListener(v -> {
             new androidx.appcompat.app.AlertDialog.Builder(this)
                     .setTitle("Touch Control Permission")
                     .setMessage(
@@ -53,16 +70,14 @@ public class MainActivity extends AppCompatActivity {
         });
 
         updateUI(false);
-        showUrl();
     }
 
     private void showUrl() {
         String ip = getWifiIp();
-        boolean a11yEnabled = BrowserDroidAccessibilityService.isEnabled();
         statusText.setText(
-                "Connect Browser to same WiFi, then visit:\n\n" +
-                        "https://" + ip + ":8443\n\n" +
-                        "Touch control: " + (a11yEnabled ? "✓ Enabled" : "✗ Not enabled — tap button below"));
+                "Connect your browser to the same WiFi, then visit:\n\n" +
+                        "https://" + ip + ":8443");
+        updateAccessibilityButton();
     }
 
     private void checkPermissionsAndStart() {
