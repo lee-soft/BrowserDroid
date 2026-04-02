@@ -1,0 +1,80 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center_horizontal"
+    android:background="#0a0a0a">
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="BrowserDroid"
+        android:textSize="32sp"
+        android:textStyle="bold"
+        android:textColor="#FFFFFF"
+        android:layout_marginBottom="4dp" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Android Remote Control"
+        android:textSize="13sp"
+        android:textColor="#666666"
+        android:layout_marginBottom="32dp" />
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:background="#1a1a1a"
+        android:padding="20dp"
+        android:layout_marginBottom="32dp">
+
+        <TextView
+            android:id="@+id/statusText"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textColor="#CCCCCC"
+            android:textSize="14sp"
+            android:lineSpacingMultiplier="1.5"
+            android:fontFamily="monospace" />
+    </LinearLayout>
+
+    <Button
+        android:id="@+id/startButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Start Streaming"
+        android:textSize="16sp"
+        android:backgroundTint="#CC0000"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/stopButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Stop Streaming"
+        android:textSize="16sp"
+        android:backgroundTint="#333333"
+        android:layout_marginBottom="12dp" />
+
+    <Button
+        android:id="@+id/accessibilityButton"
+        android:layout_width="match_parent"
+        android:layout_height="56dp"
+        android:text="Enable Touch Control"
+        android:textSize="16sp"
+        android:backgroundTint="#1565C0" />
+
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Phone and browser must be on the same network.\nHotspot works great too."
+        android:textSize="11sp"
+        android:textColor="#444444"
+        android:gravity="center"
+        android:layout_marginTop="24dp"
+        android:lineSpacingMultiplier="1.4" />
+
+</LinearLayout>

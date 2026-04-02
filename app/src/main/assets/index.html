@@ -1,0 +1,222 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, user-scalable=no">
+  <title>BrowserDroid</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      background: #000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      height: 100vh;
+      overflow: hidden;
+    }
+
+    #screen {
+      display: block;
+      max-width: 100vw;
+      max-height: 100vh;
+      cursor: pointer;
+      touch-action: none;
+    }
+
+    #status {
+      position: fixed;
+      top: 8px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.7);
+      padding: 4px 12px;
+      border-radius: 12px;
+      font-size: 12px;
+      color: #aaa;
+      pointer-events: none;
+      z-index: 10;
+      font-family: sans-serif;
+      white-space: nowrap;
+    }
+    #status.ok  { color: #1db954; }
+    #status.err { color: #e53935; }
+  </style>
+</head>
+<body>
+
+<div id="status">Connecting…</div>
+<canvas id="screen"></canvas>
+
+<script>
+  const canvas = document.getElementById('screen');
+  const ctx    = canvas.getContext('2d');
+  const status = document.getElementById('status');
+
+  let decoder    = null;
+  let configured = false;
+  let frameCount = 0;
+  let controlWs  = null;
+
+  // ── Status helper ──────────────────────────────────────────────────────────
+
+  function setStatus(msg, cls) {
+    status.textContent = msg;
+    status.className   = cls || '';
+  }
+
+  // ── Video decoder ──────────────────────────────────────────────────────────
+
+  function initDecoder() {
+    if (decoder) { try { decoder.close(); } catch (e) {} }
+    decoder = new VideoDecoder({
+      output: frame => {
+        if (canvas.width  !== frame.displayWidth ||
+            canvas.height !== frame.displayHeight) {
+          canvas.width  = frame.displayWidth;
+          canvas.height = frame.displayHeight;
+        }
+        ctx.drawImage(frame, 0, 0);
+        frame.close();
+        frameCount++;
+        if (frameCount === 1) setStatus('Streaming ▶', 'ok');
+      },
+      error: e => {
+        console.error('Decoder error:', e);
+        configured = false;
+      }
+    });
+    configured = false;
+  }
+
+  // ── Stream WebSocket (video) ───────────────────────────────────────────────
+
+  function connectStream() {
+    initDecoder();
+    frameCount = 0;
+
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const ws = new WebSocket(proto + '//' + location.host + '/stream');
+    ws.binaryType = 'arraybuffer';
+    setStatus('Connecting…');
+
+    ws.onopen = () => setStatus('Connected — waiting for video…');
+
+    ws.onmessage = e => {
+      const b    = new Uint8Array(e.data);
+      const type = b[0];
+      const nal  = b.slice(1);
+
+      if (type === 0) {
+        try {
+          decoder.configure({ codec: 'avc1.42E01E', description: nal });
+          configured = true;
+          console.log('Decoder configured, SPS/PPS size=' + nal.length);
+        } catch (err) {
+          setStatus('Config failed: ' + err.message, 'err');
+          console.error('configure failed:', err);
+        }
+        return;
+      }
+
+      if (!configured) return;
+
+      const nalType = nal[4] & 0x1f;
+      const isKey   = nalType === 5 || nalType === 7;
+      if (!isKey && frameCount === 0) return;
+
+      try {
+        decoder.decode(new EncodedVideoChunk({
+          type:      isKey ? 'key' : 'delta',
+          timestamp: performance.now() * 1000,
+          data:      nal
+        }));
+      } catch (err) {
+        console.error('Decode error:', err);
+      }
+    };
+
+    ws.onclose = () => {
+      setStatus('Disconnected — retrying…', 'err');
+      configured = false;
+      setTimeout(connectStream, 2000);
+    };
+
+    ws.onerror = () => setStatus('Connection error', 'err');
+  }
+
+  function connectControl() {
+    const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+    controlWs = new WebSocket(proto + '//' + location.host + '/control');
+    controlWs.onopen  = () => console.log('Control connected');
+    controlWs.onclose = () => setTimeout(connectControl, 2000);
+  }
+
+  function sendControl(obj) {
+    if (controlWs && controlWs.readyState === WebSocket.OPEN) {
+      controlWs.send(JSON.stringify(obj));
+    }
+  }
+
+  // ── Coordinate normalisation ───────────────────────────────────────────────
+  // Maps canvas pixel coords → 0..1 range, accounting for letterboxing
+
+  function normalise(e) {
+    const r  = canvas.getBoundingClientRect();
+    // getBoundingClientRect gives the rendered size; canvas.width/height is the
+    // logical size. We want the position relative to the actual video content.
+    const scaleX = canvas.width  / r.width;
+    const scaleY = canvas.height / r.height;
+    return {
+      x: ((e.clientX - r.left) * scaleX) / canvas.width,
+      y: ((e.clientY - r.top)  * scaleY) / canvas.height
+    };
+  }
+
+  // ── Pointer events (mouse on desktop) ─────────────────────
+
+  canvas.addEventListener('pointerdown', e => {
+    e.preventDefault();
+    const p = normalise(e);
+    sendControl({ type: 'touch', action: 'down', x: p.x, y: p.y });
+  });
+
+  canvas.addEventListener('pointermove', e => {
+    if (!e.buttons) return;
+    e.preventDefault();
+    const p = normalise(e);
+    sendControl({ type: 'touch', action: 'move', x: p.x, y: p.y });
+  });
+
+  canvas.addEventListener('pointerup', e => {
+    e.preventDefault();
+    const p = normalise(e);
+    sendControl({ type: 'touch', action: 'up', x: p.x, y: p.y });
+  });
+
+  // Scroll wheel → swipe (useful for trackpad / scroll)
+  canvas.addEventListener('wheel', e => {
+    e.preventDefault();
+    sendControl({ type: 'scroll', dx: e.deltaX, dy: e.deltaY });
+  }, { passive: false });
+
+  // Keyboard
+  document.addEventListener('keydown', e => {
+    sendControl({ type: 'key', code: e.code, key: e.key, down: true });
+  });
+  document.addEventListener('keyup', e => {
+    sendControl({ type: 'key', code: e.code, key: e.key, down: false });
+  });
+
+  // ── Start ──────────────────────────────────────────────────────────────────
+
+  if (typeof VideoDecoder === 'undefined') {
+    setStatus('WebCodecs not supported in this browser', 'err');
+  } else {
+    connectStream();
+    connectControl();
+  }
+</script>
+
+</body>
+</html>
