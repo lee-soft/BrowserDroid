@@ -1,4 +1,4 @@
-package com.example.browserdroid;
+package com.leesoft.browserdroid;
 
 import android.os.SystemClock;
 import android.util.DisplayMetrics;

@@ -1,4 +1,4 @@
-package com.example.browserdroid;
+package com.leesoft.browserdroid;
 
 import android.util.Log;
 import java.net.Inet4Address;

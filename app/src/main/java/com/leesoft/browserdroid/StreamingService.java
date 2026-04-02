@@ -1,4 +1,4 @@
-package com.example.browserdroid;
+package com.leesoft.browserdroid;
 
 import android.app.Notification;
 import android.app.NotificationChannel;

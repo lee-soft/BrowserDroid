@@ -1,4 +1,4 @@
-package com.example.browserdroid;
+package com.leesoft.browserdroid;
 
 import android.accessibilityservice.AccessibilityService;
 import android.accessibilityservice.GestureDescription;

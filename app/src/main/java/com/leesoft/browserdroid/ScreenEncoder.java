@@ -1,4 +1,4 @@
-package com.example.browserdroid;
+package com.leesoft.browserdroid;
 
 import android.hardware.display.DisplayManager;
 import android.hardware.display.VirtualDisplay;
