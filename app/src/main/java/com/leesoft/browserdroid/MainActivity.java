@@ -75,8 +75,12 @@ public class MainActivity extends AppCompatActivity {
     private void showUrl() {
         String ip = getWifiIp();
         statusText.setText(
-                "Connect your browser to the same WiFi, then visit:\n\n" +
-                        "https://" + ip + ":8443");
+                "Open this address on any browser on the same WiFi:\n\n" +
+                        "https://" + ip + ":8443\n\n" +
+                        "⚠ Your browser will warn that the connection is not private — this is expected. " +
+                        "The stream uses a self-signed certificate so your data stays encrypted on your local network. "
+                        +
+                        "Tap Advanced → Proceed to continue.");
         updateAccessibilityButton();
     }
 
@@ -132,8 +136,11 @@ public class MainActivity extends AppCompatActivity {
 
         updateUI(true);
         String ip = getWifiIp();
-        statusText.setText("Streaming!\n\nOpen in browser:\nhttps://" + ip
-                + ":8443\n\nMake sure Browser is on the same WiFi\nor connected to your phone's hotspot.");
+        statusText.setText(
+                "Streaming! Open this address in your browser:\n\n" +
+                        "https://" + ip + ":8443\n\n" +
+                        "⚠ If your browser warns the connection is not private, tap Advanced → Proceed. " +
+                        "This is expected — the certificate is self-signed and your stream stays local.");
     }
 
     private void stopStreaming() {
