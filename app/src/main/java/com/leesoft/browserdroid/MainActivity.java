@@ -42,9 +42,14 @@ public class MainActivity extends AppCompatActivity {
         stopButton.setOnClickListener(v -> stopStreaming());
 
         findViewById(R.id.accessibilityButton).setOnClickListener(v -> {
-            // Open Android accessibility settings so user can enable the service
-            startActivity(new android.content.Intent(
-                    android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS));
+            new androidx.appcompat.app.AlertDialog.Builder(this)
+                    .setTitle("Touch Control Permission")
+                    .setMessage(
+                            "BrowserDroid uses the Accessibility Service solely to inject touch gestures — taps, swipes, and scrolls — sent from your browser. It does not read screen content, collect any data, or access personal information.")
+                    .setPositiveButton("Open Settings", (d, w) -> startActivity(
+                            new android.content.Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS)))
+                    .setNegativeButton("Cancel", null)
+                    .show();
         });
 
         updateUI(false);

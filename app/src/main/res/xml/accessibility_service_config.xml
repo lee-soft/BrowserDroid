@@ -3,4 +3,5 @@
     android:accessibilityEventTypes="typeAllMask"
     android:accessibilityFlags="flagDefault"
     android:canPerformGestures="true"
+    android:isAccessibilityTool="false"
     android:description="@string/accessibility_description" />
